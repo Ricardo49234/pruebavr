@@ -1,7 +1,7 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.module.min.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.159.0/examples/jsm/loaders/GLTFLoader.js';
 
-// Configuración básica de la escena
+// Configuración básica
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -13,29 +13,67 @@ document.body.appendChild(renderer.domElement);
 const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
 scene.add(ambientLight);
 
-// Suelo (simulación de piso de oficina)
+// Suelo
 const floorGeometry = new THREE.PlaneGeometry(10, 10);
 const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 });
 const floor = new THREE.Mesh(floorGeometry, floorMaterial);
 floor.rotation.x = -Math.PI / 2;
 scene.add(floor);
 
-// Cámara en posición inicial
+// Posición de la cámara
 camera.position.set(0, 2, 5);
 
-// Cargar modelo 3D de persona
+// Variables para el personaje
+let personaje;
 const loader = new GLTFLoader();
 loader.load('modelo.glb', (gltf) => {
-    const personaje = gltf.scene;
-    personaje.position.set(0, 0, 0); // Posición en la escena
+    personaje = gltf.scene;
+    personaje.position.set(0, 0, 0);
     scene.add(personaje);
 }, undefined, (error) => {
     console.error('Error al cargar el modelo:', error);
 });
 
+// Movimiento del personaje
+const velocidad = 0.05;
+const teclas = { W: false, A: false, S: false, D: false };
+
+window.addEventListener('keydown', (event) => {
+    if (event.key.toUpperCase() in teclas) {
+        teclas[event.key.toUpperCase()] = true;
+    }
+});
+
+window.addEventListener('keyup', (event) => {
+    if (event.key.toUpperCase() in teclas) {
+        teclas[event.key.toUpperCase()] = false;
+    }
+});
+
+// Función para hablar
+function hablar(texto) {
+    const speech = new SpeechSynthesisUtterance(texto);
+    speech.lang = 'es-ES';
+    window.speechSynthesis.speak(speech);
+}
+
+// Hacer que el personaje hable después de 3 segundos
+setTimeout(() => {
+    hablar("Hola, bienvenido a la oficina virtual.");
+}, 3000);
+
 // Animación
 function animate() {
     requestAnimationFrame(animate);
+
+    // Movimiento
+    if (personaje) {
+        if (teclas.W) personaje.position.z -= velocidad;
+        if (teclas.S) personaje.position.z += velocidad;
+        if (teclas.A) personaje.position.x -= velocidad;
+        if (teclas.D) personaje.position.x += velocidad;
+    }
+
     renderer.render(scene, camera);
 }
 animate();
